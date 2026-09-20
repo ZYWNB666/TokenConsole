@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+/*
+ * TokenAPI — Enterprise AI API Console
+ *
+ * Semantic design tokens. Components must consume these through the Tailwind
+ * theme mappings below (bg-surface, text-muted-foreground, border-border, …)
+ * and never hard-code raw palette values.
+ */
+
+:root {
+  /* Neutral foundation (Slate) */
+  --background: #f8fafc; /* slate-50  — restrained page canvas */
+  --foreground: #0f172a; /* slate-900 — primary text */
+  --surface: #ffffff; /* cards, sidebar and other raised surfaces */
+  --surface-muted: #f1f5f9; /* slate-100 — subtle fills, table headers */
+  --border: #e2e8f0; /* slate-200 — hairline borders */
+  --muted-foreground: #475569; /* slate-600 — secondary text (7.6:1 on white, 6.9:1 on surface-muted) */
+
+  /* Accent (Indigo) */
+  --primary: #4f46e5; /* indigo-600 — 6.3:1 with white text */
+  --primary-foreground: #ffffff;
+  --focus-ring: #6366f1; /* indigo-500 — visible focus indicator */
+
+  /* Semantic status — always paired with text or an icon, never color alone.
+     Chosen so status text stays >= 4.5:1 on white cards, the slate-50 canvas,
+     hovered table rows and the soft tinted badge surfaces (status/10):
+     on white — success 7.1:1, warning 7.1:1, error 6.5:1, info 6.7:1;
+     on status/10 tinted badge surfaces — all >= 5.4:1. */
+  --success: #166534; /* green-800 */
+  --warning: #92400e; /* amber-800 */
+  --error: #b91c1c; /* red-700 — 6.5:1 as text on white and with white text */
+  --info: #1d4ed8; /* blue-700 */
+}
+
+/*
+ * Tailwind theme mapping. `inline` keeps the generated utilities pointing at
+ * the runtime CSS variables above, so changing a token updates every
+ * component without rebuilding the theme.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --color-ring: var(--focus-ring);
+
+  /* Radius scale: controls 6px, cards and dialogs 8px. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* System font stacks — no remote font download at build time. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Sheet animations — no animation library needed. */
+  --animate-fade-in: fade-in 200ms ease-out;
+  --animate-fade-out: fade-out 150ms ease-in forwards;
+  --animate-sheet-in-right: sheet-in-right 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-sheet-out-right: sheet-out-right 150ms ease-in forwards;
+  --animate-sheet-in-left: sheet-in-left 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-sheet-out-left: sheet-out-left 150ms ease-in forwards;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes sheet-in-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes sheet-out-right {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes sheet-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes sheet-out-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

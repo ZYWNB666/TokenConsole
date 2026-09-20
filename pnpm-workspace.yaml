@@ -1,0 +1,7 @@
+# pnpm settings live here since pnpm 12. This is a single-package project:
+# no `packages` field, so no workspace members are defined.
+
+# Dependencies whose install scripts are allowed to run. unrs-resolver is a
+# transitive eslint toolchain dependency (native napi resolver).
+allowBuilds:
+  unrs-resolver: true

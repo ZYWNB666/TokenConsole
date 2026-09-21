@@ -10,14 +10,28 @@ import { BrandMark } from "@/components/layout/brand-mark";
 import { brand } from "@/lib/brand";
 import { sanitizeReturnTo } from "@/lib/auth-guards";
 import { signIn, verifySignIn } from "@/features/auth/auth-client";
+import { useT } from "@/i18n/provider";
+import type { DictionaryKey } from "@/i18n/dictionaries/en";
 
 import type { LoginResult } from "@/types/auth";
+
+/** Server error codes mapped to localized messages; unknown codes stay generic. */
+const errorKeys: Record<string, DictionaryKey> = {
+  invalid_credentials: "login.error.invalidCredentials",
+  verification_failed: "login.error.invalidCredentials",
+  rate_limited: "login.error.rateLimited",
+  upstream_unavailable: "login.error.unavailable",
+  origin_config_error: "login.error.unavailable",
+  origin_forbidden: "login.error.unavailable",
+  backend_version_mismatch: "login.error.unavailable",
+};
 
 /**
  * Sign-in screen. The two-factor flow token lives only in this component's
  * state — never in localStorage, sessionStorage or the URL.
  */
 export function LoginScreen() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = sanitizeReturnTo(searchParams.get("returnTo"));
@@ -31,14 +45,18 @@ export function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleResult(result: { data?: LoginResult; error?: { message: string } }) {
+  async function handleResult(result: {
+    data?: LoginResult;
+    error?: { code: string; message: string };
+  }) {
     if (result.error) {
-      setError(result.error.message);
+      const key = errorKeys[result.error.code] ?? "login.error.generic";
+      setError(t(key));
       return;
     }
     const data = result.data;
     if (!data) {
-      setError("Something went wrong. Please try again.");
+      setError(t("login.error.generic"));
       return;
     }
     if (data.status === "verification_required") {
@@ -89,7 +107,7 @@ export function LoginScreen() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10 sm:px-6">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-lg border border-border bg-surface lg:grid-cols-2">
+      <div className="grid w-full max-w-4xl overflow-hidden rounded-lg border border-border bg-surface shadow-sm motion-safe:animate-content-in lg:grid-cols-2">
         <div className="hidden flex-col justify-between gap-16 border-r border-border bg-surface-muted/50 p-10 lg:flex">
           <div className="flex items-center gap-2.5">
             <BrandMark />
@@ -100,13 +118,13 @@ export function LoginScreen() {
           </div>
           <div className="space-y-2">
             <p className="text-lg font-semibold tracking-tight text-foreground">
-              The enterprise console for your AI APIs.
+              {t("login.marketing.title")}
             </p>
             <p className="text-sm text-muted-foreground">
-              Manage keys, monitor usage and keep spending under control — from one place.
+              {t("login.marketing.body")}
             </p>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="font-mono text-xs text-muted-foreground">
             {brand.apiEndpoint}
           </p>
         </div>
@@ -115,15 +133,15 @@ export function LoginScreen() {
           {phase === "credentials" ? (
             <>
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                Sign in to {brand.name}
+                {t("login.heading", { name: brand.name })}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Use your workspace account to continue.
+                {t("login.subtitle")}
               </p>
               <form className="mt-6 space-y-4" onSubmit={handleCredentialsSubmit}>
                 <div className="space-y-2">
                   <label htmlFor="login-username" className="block text-sm font-medium text-foreground">
-                    Username
+                    {t("login.username")}
                   </label>
                   <Input
                     id="login-username"
@@ -138,7 +156,7 @@ export function LoginScreen() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="login-password" className="block text-sm font-medium text-foreground">
-                    Password
+                    {t("login.password")}
                   </label>
                   <div className="relative">
                     <Input
@@ -155,7 +173,7 @@ export function LoginScreen() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((value) => !value)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
                       aria-pressed={showPassword}
                       className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
@@ -173,22 +191,22 @@ export function LoginScreen() {
                   </p>
                 ) : null}
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Signing in…" : "Sign in"}
+                  {submitting ? t("login.submitting") : t("login.submit")}
                 </Button>
               </form>
             </>
           ) : (
             <>
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                Two-factor verification
+                {t("login.twoFactor.title")}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Enter the 6-digit code from your authenticator app.
+                {t("login.twoFactor.subtitle")}
               </p>
               <form className="mt-6 space-y-4" onSubmit={handleCodeSubmit}>
                 <div className="space-y-2">
                   <label htmlFor="login-code" className="block text-sm font-medium text-foreground">
-                    Verification code
+                    {t("login.twoFactor.code")}
                   </label>
                   <Input
                     id="login-code"
@@ -210,14 +228,14 @@ export function LoginScreen() {
                   </p>
                 ) : null}
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Verifying…" : "Verify"}
+                  {submitting ? t("login.twoFactor.verifying") : t("login.twoFactor.verify")}
                 </Button>
                 <button
                   type="button"
                   onClick={backToCredentials}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md px-1"
+                  className="rounded-md px-1 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  Back to sign in
+                  {t("login.twoFactor.back")}
                 </button>
               </form>
             </>

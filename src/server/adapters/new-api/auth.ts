@@ -500,8 +500,19 @@ export async function logoutUpstream(input: {
 }
 
 export type SelfResult =
-  | { ok: true; user: UpstreamUser }
+  | { ok: true; user: UpstreamUser; account?: UpstreamAccountFields }
   | { ok: false; status: 401 | 429 | 503; code: string };
+
+/**
+ * Raw account counters from the same /self payload (internal quota units —
+ * converted to public money only inside user-mapping, never passed through).
+ * Optional because older protocol responses and fixtures may omit them.
+ */
+export type UpstreamAccountFields = {
+  quota: number;
+  usedQuota: number;
+  requestCount: number;
+};
 
 export async function fetchSelf(accessToken: string): Promise<SelfResult> {
   let response: Response;
@@ -551,7 +562,18 @@ export async function fetchSelf(accessToken: string): Promise<SelfResult> {
     console.error("[auth] upstream self response malformed");
     return { ok: false, status: 503, code: "UPSTREAM_UNAVAILABLE" };
   }
-  return {
+  let account: UpstreamAccountFields | undefined;
+  const quota = user.quota;
+  const usedQuota = user.used_quota;
+  const requestCount = user.request_count;
+  if (
+    typeof quota === "number" && Number.isFinite(quota) &&
+    typeof usedQuota === "number" && Number.isFinite(usedQuota) &&
+    typeof requestCount === "number" && Number.isInteger(requestCount) && requestCount >= 0
+  ) {
+    account = { quota, usedQuota, requestCount };
+  }
+    return {
     ok: true,
     user: {
       id: user.id as number,
@@ -560,5 +582,6 @@ export async function fetchSelf(accessToken: string): Promise<SelfResult> {
       email: typeof user.email === "string" ? user.email : "",
       role: user.role as number,
     },
+    account,
   };
 }

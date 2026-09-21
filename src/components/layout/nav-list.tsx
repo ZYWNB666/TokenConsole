@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useT } from "@/i18n/provider";
 import { consoleNav } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -16,17 +17,18 @@ type NavListProps = {
 
 export function NavList({ collapsed = false, onNavigate, className }: NavListProps) {
   const pathname = usePathname();
+  const t = useT();
 
   return (
-    <nav aria-label="Main navigation" className={cn("flex flex-col gap-5", className)}>
+    <nav aria-label={t("nav.main")} className={cn("flex flex-col gap-5", className)}>
       {consoleNav.map((group, groupIndex) => (
         <div
-          key={group.label ?? `group-${groupIndex}`}
+          key={group.labelKey ?? `group-${groupIndex}`}
           className="flex flex-col gap-1"
         >
-          {group.label && !collapsed ? (
+          {group.labelKey && !collapsed ? (
             <div className="px-2.5 pb-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              {group.label}
+              {t(group.labelKey)}
             </div>
           ) : null}
           {group.routes.map((route) => {
@@ -38,20 +40,29 @@ export function NavList({ collapsed = false, onNavigate, className }: NavListPro
                 href={route.href}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
-                title={collapsed ? route.title : undefined}
+                title={collapsed ? t(route.titleKey) : undefined}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active
                     ? "bg-primary/10 font-medium text-primary"
                     : "text-foreground hover:bg-surface-muted",
                   collapsed && "justify-center px-2",
                 )}
               >
-                <Icon aria-hidden="true" className="size-4 shrink-0" />
+                {active ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary transition-transform"
+                  />
+                ) : null}
+                <Icon
+                  aria-hidden="true"
+                  className="size-4 shrink-0 transition-transform duration-200 motion-safe:group-hover:scale-110"
+                />
                 {collapsed ? (
-                  <span className="sr-only">{route.title}</span>
+                  <span className="sr-only">{t(route.titleKey)}</span>
                 ) : (
-                  <span className="truncate">{route.title}</span>
+                  <span className="truncate">{t(route.titleKey)}</span>
                 )}
               </Link>
             );

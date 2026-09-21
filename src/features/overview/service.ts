@@ -1,13 +1,36 @@
-import { dashboardMock } from "@/mocks/dashboard";
-
-import type { DashboardData } from "./types";
+import type { OverviewData } from "./types";
 
 /**
- * Demo data source for the Overview dashboard. A later phase replaces this
- * with the owned /api/v1/dashboard endpoint through the shared API client;
- * the returned shape already matches that contract, so the UI will not
- * change when the implementation switches.
+ * Browser client for the owned /api/v1/overview endpoint. The browser only
+ * ever speaks to this API — the New API fork stays unreachable from the
+ * client. The browser never sees or stores tokens; they live only in the
+ * encrypted HttpOnly BFF cookie.
  */
-export async function getDashboard(): Promise<DashboardData> {
-  return dashboardMock;
+
+export type OverviewState =
+  | { status: "loading" }
+  | { status: "ready"; data: OverviewData }
+  | { status: "unauthenticated" }
+  | { status: "error" };
+
+export async function fetchOverview(): Promise<OverviewState> {
+  try {
+    const response = await fetch("/api/v1/overview", { credentials: "same-origin" });
+    if (response.status === 401 || response.status === 403) {
+      return { status: "unauthenticated" };
+    }
+    if (!response.ok) {
+      return { status: "error" };
+    }
+    const parsed: unknown = await response.json().catch(() => null);
+    if (parsed && typeof parsed === "object" && "data" in parsed) {
+      const data = (parsed as { data: OverviewData }).data;
+      if (data && typeof data.rangeStart === "string" && Array.isArray(data.metrics)) {
+        return { status: "ready", data };
+      }
+    }
+    return { status: "error" };
+  } catch {
+    return { status: "error" };
+  }
 }

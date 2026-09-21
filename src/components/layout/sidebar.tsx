@@ -2,6 +2,7 @@
 
 import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 
+import { useT } from "@/i18n/provider";
 import { brand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,8 @@ type SidebarProps = {
 };
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const t = useT();
+
   return (
     <aside
       id="console-sidebar"
@@ -22,12 +25,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         collapsed ? "w-16" : "w-60",
       )}
     >
-      <div
-        className={cn(
-          "flex h-13 shrink-0 items-center border-b border-border",
-          collapsed ? "justify-center px-2" : "gap-2.5 px-4",
-        )}
-      >
+      <div className="flex h-13 shrink-0 items-center gap-2.5 border-b border-border px-4">
         <BrandMark />
         {!collapsed ? (
           <div className="min-w-0 leading-tight">
@@ -59,9 +57,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <PanelLeftCloseIcon aria-hidden="true" className="size-4 shrink-0" />
           )}
           {collapsed ? (
-            <span className="sr-only">Expand sidebar</span>
+            <span className="sr-only">{t("header.expand")}</span>
           ) : (
-            <span>Collapse</span>
+            <span>{t("header.collapse")}</span>
           )}
         </button>
       </div>

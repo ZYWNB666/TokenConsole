@@ -11,107 +11,111 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import type { DictionaryKey } from "@/i18n/dictionaries/en";
+
 export type ConsoleRoute = {
   /** Absolute route path, e.g. "/api-keys". */
   href: string;
   /** Route slug used by the dynamic [section] route, e.g. "api-keys". */
   section: string;
-  title: string;
-  description: string;
+  /** Dictionary key for the link/page title. */
+  titleKey: DictionaryKey;
+  /** Dictionary key for the page description. */
+  descriptionKey: DictionaryKey;
   icon: LucideIcon;
 };
 
 export type ConsoleNavGroup = {
   /** null renders the group without a label (top-level entries). */
-  label: string | null;
+  labelKey: DictionaryKey | null;
   routes: ConsoleRoute[];
 };
 
 export const consoleNav: ConsoleNavGroup[] = [
   {
-    label: null,
+    labelKey: null,
     routes: [
       {
         href: "/overview",
         section: "overview",
-        title: "Overview",
-        description: "Monitor API usage, spend, and reliability across your workspace.",
+        titleKey: "nav.overview.title",
+        descriptionKey: "nav.overview.description",
         icon: LayoutDashboardIcon,
       },
     ],
   },
   {
-    label: "API",
+    labelKey: "nav.group.api",
     routes: [
       {
         href: "/api-keys",
         section: "api-keys",
-        title: "API Keys",
-        description: "Create and manage project-scoped API keys.",
+        titleKey: "nav.apiKeys.title",
+        descriptionKey: "nav.apiKeys.description",
         icon: KeyRoundIcon,
       },
       {
         href: "/playground",
         section: "playground",
-        title: "Playground",
-        description: "Send test requests against your keys and inspect responses.",
+        titleKey: "nav.playground.title",
+        descriptionKey: "nav.playground.description",
         icon: SquareTerminalIcon,
       },
       {
         href: "/models",
         section: "models",
-        title: "Models",
-        description: "Browse the model catalogue with context windows and pricing.",
+        titleKey: "nav.models.title",
+        descriptionKey: "nav.models.description",
         icon: BoxesIcon,
       },
       {
         href: "/requests",
         section: "requests",
-        title: "Request Logs",
-        description: "Search and inspect individual API requests.",
+        titleKey: "nav.requests.title",
+        descriptionKey: "nav.requests.description",
         icon: ScrollTextIcon,
       },
     ],
   },
   {
-    label: "Observability",
+    labelKey: "nav.group.observability",
     routes: [
       {
         href: "/usage",
         section: "usage",
-        title: "Usage",
-        description: "Analyze usage by time, model, project and key.",
+        titleKey: "nav.usage.title",
+        descriptionKey: "nav.usage.description",
         icon: BarChart3Icon,
       },
     ],
   },
   {
-    label: "Billing",
+    labelKey: "nav.group.billing",
     routes: [
       {
         href: "/billing",
         section: "billing",
-        title: "Billing Overview",
-        description: "Track spend, invoices and payment transactions.",
+        titleKey: "nav.billing.title",
+        descriptionKey: "nav.billing.description",
         icon: CreditCardIcon,
       },
     ],
   },
   {
-    label: "Organization",
+    labelKey: "nav.group.organization",
     routes: [
       {
         href: "/organization",
         section: "organization",
-        title: "Organization",
-        description: "Manage members, projects and access control.",
+        titleKey: "nav.organization.title",
+        descriptionKey: "nav.organization.description",
         icon: Building2Icon,
       },
       {
         href: "/settings",
         section: "settings",
-        title: "Settings",
-        description: "Workspace and organization settings.",
+        titleKey: "nav.settings.title",
+        descriptionKey: "nav.settings.description",
         icon: SettingsIcon,
       },
     ],

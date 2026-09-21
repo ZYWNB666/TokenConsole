@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ChevronDownIcon, CircleAlertIcon, LogOutIcon, MenuIcon, SettingsIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  CircleAlertIcon,
+  LogOutIcon,
+  MenuIcon,
+  SettingsIcon,
+  WalletIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
   DropdownMenu,
@@ -16,6 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { fetchCurrentUser, signOut } from "@/features/auth/auth-client";
+import { LanguageSwitcher } from "@/i18n/language-switcher";
+import { useFormat, useT } from "@/i18n/provider";
 import { brand } from "@/lib/brand";
 import { consoleRoutes } from "@/lib/navigation";
 
@@ -30,11 +38,13 @@ type HeaderProps = {
 /**
  * Console header. Page protection happens in the (console) layout before
  * this component ever renders; the /me call here only loads the user's
- * identity. A rejected session (401) returns the browser to /login, while a
- * temporary backend outage keeps the session and shows an unobtrusive
- * error state instead of signing anybody out.
+ * identity and account balance. A rejected session (401) returns the
+ * browser to /login, while a temporary backend outage keeps the session
+ * and shows an unobtrusive error state instead of signing anybody out.
  */
 export function Header({ onOpenMobileNav, menuButtonRef }: HeaderProps) {
+  const t = useT();
+  const format = useFormat();
   const pathname = usePathname();
   const router = useRouter();
   const route = consoleRoutes.find((item) => item.href === pathname);
@@ -69,6 +79,7 @@ export function Header({ onOpenMobileNav, menuButtonRef }: HeaderProps) {
   }
 
   const displayName = user?.display_name || user?.username || "";
+  const balance = user?.account?.balance_usd;
 
   return (
     <header className="sticky top-0 z-40 flex h-13 shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-4 lg:px-6">
@@ -77,7 +88,7 @@ export function Header({ onOpenMobileNav, menuButtonRef }: HeaderProps) {
           type="button"
           ref={menuButtonRef}
           onClick={onOpenMobileNav}
-          aria-label="Open navigation"
+          aria-label={t("header.openNavigation")}
           className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
         >
           <MenuIcon aria-hidden="true" className="size-4.5" />
@@ -88,23 +99,32 @@ export function Header({ onOpenMobileNav, menuButtonRef }: HeaderProps) {
           {brand.name}
         </span>
         <span className="hidden min-w-0 truncate text-sm font-medium text-foreground lg:inline">
-          {route?.title ?? brand.name}
+          {route ? t(route.titleKey) : brand.name}
         </span>
       </div>
 
       <div className="flex shrink-0 items-center gap-2.5">
-        <Badge variant="neutral" className="hidden sm:inline-flex">
-          Demo data
-        </Badge>
+        {typeof balance === "number" ? (
+          <span
+            className="hidden items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs md:inline-flex"
+            title={t("header.balance")}
+          >
+            <WalletIcon aria-hidden="true" className="size-3.5 text-primary" />
+            <span className="font-medium tabular-nums text-foreground">
+              {format.currency(balance)}
+            </span>
+          </span>
+        ) : null}
         <div className="hidden items-center gap-1.5 rounded-md border border-border px-2 py-1 md:flex">
           <span className="hidden text-xs text-muted-foreground lg:inline">
-            API endpoint
+            {t("header.apiEndpoint")}
           </span>
           <span className="font-mono text-xs text-foreground">
             {brand.apiEndpoint}
           </span>
           <CopyButton value={brand.apiEndpoint} />
         </div>
+        <LanguageSwitcher />
 
         {userState === "ready" && user ? (
           <DropdownMenu>
@@ -134,29 +154,34 @@ export function Header({ onOpenMobileNav, menuButtonRef }: HeaderProps) {
                 ) : (
                   <div>@{user.username}</div>
                 )}
+                {typeof balance === "number" ? (
+                  <div className="pt-0.5 text-xs text-muted-foreground">
+                    {t("header.balance")}: {format.currency(balance)}
+                  </div>
+                ) : null}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/settings">
                   <SettingsIcon aria-hidden="true" />
-                  Settings
+                  {t("common.settings")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => void handleSignOut()}>
                 <LogOutIcon aria-hidden="true" />
-                Sign out
+                {t("common.signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : userState === "unavailable" ? (
           <span
             role="status"
-            title="User information is temporarily unavailable"
+            title={t("header.userUnavailableTitle")}
             className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground"
           >
             <CircleAlertIcon aria-hidden="true" className="size-4 text-warning" />
-            <span className="hidden sm:inline">Temporarily unavailable</span>
+            <span className="hidden sm:inline">{t("header.userUnavailable")}</span>
           </span>
         ) : (
           <span

@@ -6,25 +6,47 @@ This repository (`TokenConsole`) contains the console application.
 
 ## Current status
 
-The console shell, the Overview dashboard and the authentication foundation
-are in place:
+All console modules are live with **real gateway data** (no mock datasets):
 
 - Responsive App Shell: fixed collapsible sidebar (240px / 64px), 52px header,
   mobile navigation sheet, skip link, single main landmark
-- Overview dashboard at `/overview`: monthly metrics, usage trend chart
-  (Cost / Requests / Tokens), model usage, API status, recent requests — all
-  from the clearly labelled demo dataset
+- **Overview** (`/overview`): account balance, 30-day usage metrics with
+  week-over-week trends, usage trend chart, model usage mix and recent
+  requests — all from `/api/v1/overview`
+- **API Keys** (`/api-keys`): create keys (full value shown exactly once),
+  reveal on demand, full editing (name, expiry, quota cap, model
+  restrictions), enable/disable and delete — masked values in every list
+- **Playground** (`/playground`): real streamed chat completions. The BFF
+  mints a single-use API key per request, relays the call and deletes the
+  key afterwards; the browser never holds a customer key
+- **Models** (`/models`): the caller's available catalogue with public USD
+  pricing (per million tokens or per call); internal ratios never leave the
+  server
+- **Request Logs** (`/requests`): filterable (time range, model, key,
+  request id) and paginated real request history, with a filter spend
+  summary and a per-request detail dialog (including error details)
+- **Usage** (`/usage`): 7/30/90/365-day windows with totals, average
+  requests/tokens per minute, daily series and per-model plus per-key
+  breakdowns (long windows are fetched in fork-sized chunks)
+- **Billing** (`/billing`): balance, month and lifetime spend, real top-up
+  history. Payment/recharge is deliberately absent until a real payment
+  provider integration exists
+- **Organization** (`/organization`): member directory and role/enable
+  management for admins; members see an honest admin-required state and
+  their session is never affected (403 without cookie clearing)
+- **Settings** (`/settings`): display-name profile and active login-session
+  management (revoke one or all others)
+- Localization: full English/简体中文 UI with a header language switcher;
+  the choice persists in the `tc_lang` cookie and applies server-side on
+  first paint; numbers, currency and dates format through `Intl`
+- Motion: content entrance, metric count-ups, growing usage bars and card
+  hover lift — disabled automatically under `prefers-reduced-motion`
 - Authentication: `/login` (username + password, optional 2FA step),
-  `/api/v1/auth/{login,verify,refresh,logout}` and `/api/v1/me` BFF routes,
-  and a user menu in the header (Settings / Sign out). Console pages are
-  gated server-side in `src/app/(console)/layout.tsx`: the encrypted
-  session cookie is verified before any protected HTML is produced.
-  The session lives in a single HttpOnly `tc_session` cookie (AES-256-GCM,
-  format `v1.<iv>.<ciphertext>.<auth-tag>`); the browser never sees a New
-  API token and no readable session cookie exists.
-- All other navigation destinations (`/api-keys`, `/playground`, `/models`,
-  `/requests`, `/usage`, `/billing`, `/organization`, `/settings`) show an
-  honest "Planned" state; unknown routes return 404
+  `/api/v1/auth/{login,verify,refresh,logout}` and `/api/v1/me` BFF routes.
+  Console pages are gated server-side: the encrypted session cookie is
+  verified before any protected HTML is produced. The session lives in a
+  single HttpOnly `tc_session` cookie (AES-256-GCM); the browser never sees
+  a New API token
 - `/design-system` remains as an internal component reference (not linked in
   product navigation)
 

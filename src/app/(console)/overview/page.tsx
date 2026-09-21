@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { OverviewPage } from "@/features/overview/overview-page";
+import { getDictionary, getLocale } from "@/i18n/server";
 import { requireConsoleSession } from "@/server/auth/server-session";
-
-export const metadata: Metadata = {
-  title: "Overview",
-};
 
 /**
  * The session gate runs here — in the page segment, before any protected
@@ -14,6 +11,10 @@ export const metadata: Metadata = {
  * layout-only guard would let the page's RSC payload leak into the redirect
  * response.)
  */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: getDictionary(await getLocale())["overview.title"] };
+}
+
 export default async function Page() {
   const guard = await requireConsoleSession();
   if (guard.kind === "redirect") {

@@ -7,6 +7,19 @@
 /** Console-normalized role. New API's numeric roles map onto it in the adapter. */
 export type AuthUserRole = "owner" | "admin" | "member";
 
+/**
+ * Account state in public units. Money arrives as USD numbers so the browser
+ * can format it for the active locale; internal quota units never appear.
+ */
+export type AuthAccount = {
+  /** Remaining balance in USD, rounded to cents. */
+  balance_usd: number;
+  /** Lifetime consumed spend in USD, rounded to cents. */
+  used_usd: number;
+  /** Lifetime request count. */
+  request_count: number;
+};
+
 export type AuthUser = {
   id: number;
   username: string;
@@ -14,6 +27,8 @@ export type AuthUser = {
   email: string;
   role: AuthUserRole;
   capabilities: string[];
+  /** Present when the upstream /self payload carried account counters. */
+  account?: AuthAccount;
 };
 
 export type LoginSuccess = {

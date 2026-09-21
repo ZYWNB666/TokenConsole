@@ -3,11 +3,12 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { LoginScreen } from "@/features/auth/login-screen";
+import { getDictionary, getLocale } from "@/i18n/server";
 import { getServerSession } from "@/server/auth/server-session";
 
-export const metadata: Metadata = {
-  title: "Sign in",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: getDictionary(await getLocale())["login.submit"] };
+}
 
 export default async function LoginPage() {
   // A visitor with a valid session has no business on the sign-in page.

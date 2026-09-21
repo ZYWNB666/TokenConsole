@@ -72,9 +72,14 @@ export async function startMockUpstream(routes: MockRoute[]): Promise<MockUpstre
         headers: request.headers,
         body,
       });
+      // Exact match first; routes declared without a query string also match
+      // by pathname, so callers can script endpoints that receive dynamic
+      // query parameters (e.g. ?start_timestamp=…).
       const route = currentRoutes.find(
         (candidate) =>
-          candidate.path === request.url &&
+          (candidate.path === request.url ||
+            (!candidate.path.includes("?") &&
+              candidate.path === (request.url ?? "").split("?")[0])) &&
           (candidate.method ?? request.method) === request.method,
       );
       if (!route) {

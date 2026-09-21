@@ -1,15 +1,19 @@
 import "server-only";
 
-import type { UpstreamUser } from "@/server/adapters/new-api/auth";
-import type { AuthUser, AuthUserRole } from "@/types/auth";
+import { QUOTA_PER_UNIT_USD } from "@/server/adapters/new-api/usage";
+import type { UpstreamAccountFields, UpstreamUser } from "@/server/adapters/new-api/auth";
+import type { AuthAccount, AuthUser, AuthUserRole } from "@/types/auth";
 
 /**
  * Maps an upstream New API user onto the owned /api/v1/me DTO. This is the
  * only projection point: New API numeric roles become display roles, and
- * everything else the upstream carries (quota, group, aff, stripe_customer,
- * provider bindings, permission maps, …) is dropped here rather than being
- * filtered by every caller.
+ * everything else the upstream carries (group, aff, provider bindings,
+ * permission maps, …) is dropped here rather than being filtered by every
+ * caller.
  *
+ * Account counters are the one deliberate exception: quota/used_quota are
+ * converted from the fork's internal quota units into public USD values
+ * here, so the raw integers and the unit ratio never cross this boundary.
  * Capabilities list only what TokenConsole itself has implemented and
  * verified. Organization management does not exist yet — until the owned
  * organization/member database lands, no user (regardless of upstream role)
@@ -25,7 +29,15 @@ function mapRole(role: number): AuthUserRole {
 /** The only capability every signed-in console user verifiably has today. */
 const VERIFIED_CAPABILITIES = ["console:access"] as const;
 
-export function toAuthUser(user: UpstreamUser): AuthUser {
+function mapAccount(account: UpstreamAccountFields): AuthAccount {
+  return {
+    balance_usd: Number((account.quota / QUOTA_PER_UNIT_USD).toFixed(2)),
+    used_usd: Number((account.usedQuota / QUOTA_PER_UNIT_USD).toFixed(2)),
+    request_count: account.requestCount,
+  };
+}
+
+export function toAuthUser(user: UpstreamUser, account?: UpstreamAccountFields): AuthUser {
   return {
     id: user.id,
     username: user.username,
@@ -33,5 +45,6 @@ export function toAuthUser(user: UpstreamUser): AuthUser {
     email: user.email,
     role: mapRole(user.role),
     capabilities: [...VERIFIED_CAPABILITIES],
+    ...(account ? { account: mapAccount(account) } : {}),
   };
 }

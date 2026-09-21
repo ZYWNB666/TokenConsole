@@ -26,9 +26,12 @@ const SELF_USER = {
   display_name: "Ada Lovelace",
   email: "ada@example.com",
   role: 1,
-  // Fields that must never reach the browser:
-  quota: 500,
-  used_quota: 100,
+  // Account counters in internal quota units — converted to public USD by
+  // the BFF (500,000 quota = $1): 5,000,000 → $10.00, 1,250,000 → $2.50.
+  quota: 5_000_000,
+  used_quota: 1_250_000,
+  request_count: 42,
+  // Fields that must never reach the browser, even converted:
   group: "vip",
   aff_code: "aff-secret",
   stripe_customer: "cus_secret",
@@ -97,14 +100,24 @@ describe("GET /api/v1/me", () => {
     const response = await GET(meRequest(session.cookie));
     expect(response.status).toBe(200);
     const body = await response.text();
-    const parsed = JSON.parse(body) as { data: Record<string, unknown> };
+    const parsed = JSON.parse(body) as {
+      data: Record<string, unknown> & {
+        account?: { balance_usd: number; used_usd: number; request_count: number };
+      };
+    };
     expect(Object.keys(parsed.data).sort()).toEqual(
-      ["capabilities", "display_name", "email", "id", "role", "username"].sort(),
+      ["account", "capabilities", "display_name", "email", "id", "role", "username"].sort(),
     );
+    // Account counters arrive as public USD values, not internal quota units.
+    expect(parsed.data.account).toEqual({
+      balance_usd: 10,
+      used_usd: 2.5,
+      request_count: 42,
+    });
     expect(body).not.toContain(session.accessToken);
     expect(body).not.toContain(session.refreshToken);
     expect(body).not.toContain("tc_session=");
-    for (const forbidden of ["quota", "group", "aff", "stripe_customer", "github_id"]) {
+    for (const forbidden of ["quota", "group", "aff", "stripe_customer", "github_id", "5000000", "1250000"]) {
       expect(body).not.toContain(forbidden);
     }
     expect(mock.requests[0]?.headers.authorization).toBe(`Bearer ${session.accessToken}`);

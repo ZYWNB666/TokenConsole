@@ -34,13 +34,19 @@ export function DropdownMenuContent({
 
 export function DropdownMenuItem({
   className,
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Item>) {
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+  /** `destructive` renders the item as a dangerous action. */
+  variant?: "default" | "destructive";
+}) {
   return (
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
       className={cn(
         "flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground outline-none transition-colors focus:bg-surface-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted-foreground",
+        variant === "destructive" &&
+          "text-error focus:bg-error/10 focus:text-error [&_svg]:text-error",
         className,
       )}
       {...props}

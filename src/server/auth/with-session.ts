@@ -34,10 +34,25 @@ export type AuthenticatedCallResult =
   /** `auth: true` means the failure was an auth rejection (401) — a refresh may help. */
   | { ok: false; auth: boolean; status?: 429 | 503 };
 
-export async function callAuthenticated(
+/** Same contract as AuthenticatedCallResult, for any payload type. */
+export type SessionDataCallResult<T> =
+  | { ok: true; value: T }
+  /** `status: 403` means the session is valid but lacks a privilege. */
+  | { ok: false; auth: boolean; status?: 403 | 429 | 503 };
+
+export type AuthenticatedDataCall<T> =
+  | { ok: true; value: T; setCookies: string[] }
+  | { ok: false; status: 401 | 403 | 429 | 503; clearCookies: string[] };
+
+/**
+ * Generalization of callAuthenticated for handlers that need more than the
+ * user object (e.g. the overview endpoint's usage payloads). Identical
+ * refresh-and-retry semantics: at most one upstream refresh per request.
+ */
+export async function callWithSession<T>(
   request: Request,
-  call: (accessToken: string) => Promise<AuthenticatedCallResult>,
-): Promise<AuthenticatedCall> {
+  call: (accessToken: string) => Promise<SessionDataCallResult<T>>,
+): Promise<AuthenticatedDataCall<T>> {
   const session = readSession(request);
   if (!session) {
     return { ok: false, status: 401, clearCookies: buildClearSessionCookies(request) };
@@ -45,7 +60,7 @@ export async function callAuthenticated(
 
   const first = await call(session.at);
   if (first.ok) {
-    return { ok: true, user: first.user, setCookies: [] };
+    return { ok: true, value: first.value, setCookies: [] };
   }
   if (!first.auth) {
     return { ok: false, status: first.status ?? 503, clearCookies: [] };
@@ -60,7 +75,7 @@ export async function callAuthenticated(
     if (retry.ok) {
       return {
         ok: true,
-        user: retry.user,
+        value: retry.value,
         setCookies: buildSessionCookies(
           bundle.sessionExpiresAt,
           sealSession({
@@ -83,15 +98,30 @@ export async function callAuthenticated(
       if (error.code === "AUTH_SESSION_INVALID") {
         return { ok: false, status: 401, clearCookies: buildClearSessionCookies(request) };
       }
-      // UPSTREAM_UNAVAILABLE / RATE_LIMITED / anything else: keep the session.
-      return {
-        ok: false,
-        status: error.code === "RATE_LIMITED" ? 429 : 503,
-        clearCookies: [],
-      };
+      if (error.code === "RATE_LIMITED") {
+        return { ok: false, status: 429, clearCookies: [] };
+      }
     }
     return { ok: false, status: 503, clearCookies: [] };
   }
+}
+
+export async function callAuthenticated(
+  request: Request,
+  call: (accessToken: string) => Promise<AuthenticatedCallResult>,
+): Promise<AuthenticatedCall> {
+  const result = await callWithSession(request, async (accessToken) => {
+    const inner = await call(accessToken);
+    if (inner.ok) return { ok: true as const, value: inner.user };
+    return { ok: false as const, auth: inner.auth, status: inner.status };
+  });
+  if (result.ok) {
+    return { ok: true, user: result.value, setCookies: result.setCookies };
+  }
+  // The /me contract has no privileged calls; a 403 would be an availability
+  // anomaly and is reported as 503 without touching the session.
+  const status = result.status === 403 ? 503 : result.status;
+  return { ok: false, status, clearCookies: result.clearCookies };
 }
 
 /** Convenience adapter for GET /api/user/self-style calls. */

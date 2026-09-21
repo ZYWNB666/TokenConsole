@@ -86,10 +86,11 @@ describe("console page protection (integration)", () => {
       const location = response.headers.get("location") ?? "";
       expect(location.endsWith(`/login?returnTo=${encodeURIComponent(pathname)}`), location).toBe(true);
       const body = await response.text();
-      // No console navigation, no dashboard content, no shell markup.
+      // No console navigation, no shell markup. Markers are structural
+      // (sidebar id, nav hrefs): UI strings also live in the client bundle
+      // and must never be treated as proof of protected content.
+      expect(body, pathname).not.toContain('id="console-sidebar"');
       expect(body, pathname).not.toContain('href="/api-keys"');
-      expect(body, pathname).not.toContain("Usage Trend");
-      expect(body, pathname).not.toContain("Recent Requests");
       // The bare redirect document is ~7KB; a leaked page render is 40KB+.
       expect(body.length, pathname).toBeLessThan(8_000);
     }
@@ -104,7 +105,8 @@ describe("console page protection (integration)", () => {
     expect(response.status).toBe(307);
     expect((response.headers.get("location") ?? "").endsWith("/login?returnTo=%2Foverview")).toBe(true);
     const body = await response.text();
-    expect(body).not.toContain("Usage Trend");
+    expect(body).not.toContain('id="console-sidebar"');
+    expect(body).not.toContain('href="/api-keys"');
   });
 
   it("ignores a forged readable hint cookie entirely", async () => {
@@ -114,7 +116,7 @@ describe("console page protection (integration)", () => {
     });
     expect(response.status).toBe(307);
     const body = await response.text();
-    expect(body).not.toContain("Usage Trend");
+    expect(body).not.toContain('id="console-sidebar"');
     expect(body).not.toContain('href="/api-keys"');
   });
 
@@ -122,7 +124,9 @@ describe("console page protection (integration)", () => {
     const page = await fetch(`${baseUrl}/overview`, { redirect: "manual", headers: { cookie: validCookie } });
     expect(page.status).toBe(200);
     const body = await page.text();
-    expect(body).toContain("Usage Trend");
+    // The shell renders server-side; dashboard data itself is fetched
+    // client-side from /api/v1/overview, so the shell is the content proof.
+    expect(body).toContain('id="console-sidebar"');
     expect(body).toContain('href="/api-keys"');
 
     const login = await fetch(`${baseUrl}/login`, { redirect: "manual", headers: { cookie: validCookie } });
@@ -130,14 +134,17 @@ describe("console page protection (integration)", () => {
     expect(login.headers.get("location")).toContain("/overview");
   });
 
-  it("keeps unknown sections 404 for authenticated visitors and redirects anonymous ones", async () => {
-    // Anonymous: the session gate fires before the 404 — no route probing.
+  it("keeps unknown paths 404 for everyone, with no session-dependent difference", async () => {
+    // With real static routes only, an unknown path matches no route at all:
+    // both anonymous and authenticated visitors receive the identical 404,
+    // so nothing about session state leaks through route probing. The
+    // session gates above cover every real console destination.
     const anonymous = await fetch(`${baseUrl}/does-not-exist`, { redirect: "manual" });
-    expect(anonymous.status).toBe(307);
-    expect(anonymous.headers.get("location")).toContain("/login");
+    expect(anonymous.status).toBe(404);
 
     const authed = await fetch(`${baseUrl}/does-not-exist`, { redirect: "manual", headers: { cookie: validCookie } });
     expect(authed.status).toBe(404);
+    expect(await anonymous.text()).toEqual(await authed.text());
   });
 
   it("protects exactly the navigation's console destinations", () => {

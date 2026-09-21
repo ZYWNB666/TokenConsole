@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   Area,
   AreaChart,
@@ -18,9 +18,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useFormat, useT } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 
-import type { UsageMetricKey, UsageSeriesPoint } from "./types";
+import type { OverviewMetricKey, UsageSeriesPoint } from "./types";
 
 /*
  * Chart colors mirror the semantic tokens (--primary, --border,
@@ -34,31 +35,45 @@ const CHART = {
   tick: "#475569",
 } as const;
 
+/** True when the user asked the system to minimize motion. */
+function usePrefersReducedMotion(): boolean {
+  const query = "(prefers-reduced-motion: reduce)";
+  return useSyncExternalStore(
+    (onChange) => {
+      const media = window.matchMedia(query);
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
+}
+
 type MetricConfig = {
-  label: string;
-  formatValue: (value: number) => string;
+  labelKey: `overview.chart.metricName.${OverviewMetricKey}`;
+  field: "costUsd" | "requests" | "tokens";
+  formatValue: (value: number, format: ReturnType<typeof useFormat>) => string;
   formatAxis: (value: number) => string;
 };
 
-const metricConfigs: Record<UsageMetricKey, MetricConfig> = {
+const metricConfigs: Record<OverviewMetricKey, MetricConfig> = {
   cost: {
-    label: "Cost",
-    formatValue: (value) =>
-      `$${value.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+    labelKey: "overview.chart.metricName.cost",
+    field: "costUsd",
+    formatValue: (value, format) => format.currency(value),
     formatAxis: (value) => `$${value}`,
   },
   requests: {
-    label: "Requests",
-    formatValue: (value) => value.toLocaleString("en-US"),
+    labelKey: "overview.chart.metricName.requests",
+    field: "requests",
+    formatValue: (value, format) => format.number(value),
     formatAxis: (value) =>
       value >= 1_000 ? `${Math.round(value / 1_000)}k` : `${value}`,
   },
   tokens: {
-    label: "Tokens",
-    formatValue: (value) => value.toLocaleString("en-US"),
+    labelKey: "overview.chart.metricName.tokens",
+    field: "tokens",
+    formatValue: (value, format) => format.number(value),
     formatAxis: (value) =>
       value >= 1_000_000
         ? `${Math.round(value / 1_000_000)}M`
@@ -72,50 +87,64 @@ type UsageTooltipProps = {
   active?: boolean;
   label?: string | number;
   payload?: Array<{ value?: number | string }>;
-  metric: UsageMetricKey;
+  metric: OverviewMetricKey;
 };
 
 function UsageTooltip({ active, label, payload, metric }: UsageTooltipProps) {
+  const t = useT();
+  const format = useFormat();
   if (!active || !payload?.length) return null;
   const raw = payload[0]?.value;
   const value = typeof raw === "number" ? raw : Number(raw);
   if (!Number.isFinite(value)) return null;
+  const iso = typeof label === "string" ? label : "";
+  const dateLabel = iso ? `${format.day(iso)} (UTC)` : "";
 
   return (
     <div className="rounded-md border border-border bg-surface px-3 py-2 shadow-md">
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{dateLabel}</div>
       <div className="mt-0.5 text-sm font-medium text-foreground">
-        {metricConfigs[metric].label}: {metricConfigs[metric].formatValue(value)}
+        {t(metricConfigs[metric].labelKey)}:{" "}
+        {metricConfigs[metric].formatValue(value, format)}
       </div>
     </div>
   );
 }
 
 export function UsageTrendChart({ series }: { series: UsageSeriesPoint[] }) {
-  const [metric, setMetric] = useState<UsageMetricKey>("cost");
+  const t = useT();
+  const format = useFormat();
+  const reducedMotion = usePrefersReducedMotion();
+  const [metric, setMetric] = useState<OverviewMetricKey>("cost");
   const config = metricConfigs[metric];
 
   if (series.length === 0) return null;
 
-  const values = series.map((point) => point[metric]);
+  const values = series.map((point) => point[config.field]);
   const min = Math.min(...values);
   const max = Math.max(...values);
   const first = series[0];
   const last = series[series.length - 1];
-  const summary = `Daily ${config.label.toLowerCase()} from ${first.date} to ${last.date}, ranging from ${config.formatValue(min)} to ${config.formatValue(max)}.`;
+  const summary = t("overview.chart.summary", {
+    metric: t(config.labelKey),
+    start: first.date,
+    end: last.date,
+    min: config.formatValue(min, format),
+    max: config.formatValue(max, format),
+  });
 
   return (
-    <Card className="h-full">
+    <Card className="h-full transition-all duration-200 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-md">
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="space-y-1.5">
           <CardTitle as="h2" id="usage-trend-heading">
-            Usage Trend
+            {t("overview.chart.title")}
           </CardTitle>
-          <CardDescription>Daily breakdown, last 30 days</CardDescription>
+          <CardDescription>{t("overview.chart.description")}</CardDescription>
         </div>
         <fieldset className="flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-surface-muted/60 p-0.5">
-          <legend className="sr-only">Usage metric</legend>
-          {(Object.keys(metricConfigs) as UsageMetricKey[]).map((key) => (
+          <legend className="sr-only">{t("overview.chart.metric")}</legend>
+          {(Object.keys(metricConfigs) as OverviewMetricKey[]).map((key) => (
             <label
               key={key}
               className={cn(
@@ -133,7 +162,7 @@ export function UsageTrendChart({ series }: { series: UsageSeriesPoint[] }) {
                 onChange={() => setMetric(key)}
                 className="sr-only"
               />
-              {metricConfigs[key].label}
+              {t(metricConfigs[key].labelKey)}
             </label>
           ))}
         </fieldset>
@@ -155,6 +184,7 @@ export function UsageTrendChart({ series }: { series: UsageSeriesPoint[] }) {
                 axisLine={false}
                 tickMargin={8}
                 interval={4}
+                tickFormatter={(value: string) => format.day(value)}
                 tick={{ fontSize: 12, fill: CHART.tick }}
               />
               <YAxis
@@ -167,11 +197,11 @@ export function UsageTrendChart({ series }: { series: UsageSeriesPoint[] }) {
               <Tooltip content={<UsageTooltip metric={metric} />} cursor={{ stroke: CHART.grid }} />
               <Area
                 type="monotone"
-                dataKey={metric}
+                dataKey={config.field}
                 stroke={CHART.line}
                 strokeWidth={2}
                 fill="url(#usage-area-fill)"
-                isAnimationActive={false}
+                isAnimationActive={!reducedMotion}
               />
             </AreaChart>
           </ResponsiveContainer>

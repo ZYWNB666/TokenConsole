@@ -2,7 +2,6 @@
 
 import type { RefObject } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -53,9 +52,6 @@ export function MobileNav({ open, onOpenChange, menuButtonRef }: MobileNavProps)
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-3">
           <NavList onNavigate={() => onOpenChange(false)} />
-          <div className="mt-6 border-t border-border px-2.5 pt-4">
-            <Badge variant="neutral">Demo data</Badge>
-          </div>
         </div>
       </SheetContent>
     </Sheet>

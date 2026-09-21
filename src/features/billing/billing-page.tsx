@@ -23,11 +23,12 @@ import { useFormat, useT } from "@/i18n/provider";
 import { useAsyncData } from "@/lib/use-async-data";
 
 import type { BillingView } from "./types";
+import { RechargeCard } from "./recharge-card";
 
 /**
- * Billing Overview: balance, lifetime and month spend, plus the real top-up
- * history. Payment/recharge is intentionally absent — it requires a real
- * payment-provider integration and must never be simulated.
+ * Billing Overview: balance, lifetime and month spend, the real recharge
+ * flow (gateway payment rails, honest unavailable state) and the real
+ * top-up history.
  */
 export function BillingPage() {
   const t = useT();
@@ -41,6 +42,8 @@ export function BillingPage() {
         title={t("billing.title")}
         description={t("billing.description")}
       />
+
+      <RechargeCard />
 
       {state.status === "loading" ? (
         <div role="status" aria-label={t("common.loading")} className="grid grid-cols-1 gap-4 sm:grid-cols-3">

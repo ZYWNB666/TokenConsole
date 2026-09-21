@@ -29,6 +29,7 @@ import {
 import { apiGet } from "@/lib/api-fetch";
 import { useFormat, useT } from "@/i18n/provider";
 import { useAsyncData } from "@/lib/use-async-data";
+import { useChartColors } from "@/theme/chart-colors";
 
 import type { UsageAnalysis } from "./types";
 
@@ -37,17 +38,12 @@ import type { UsageAnalysis } from "./types";
  * selectable window, all from the owned /api/v1/usage endpoint.
  */
 
-const CHART = {
-  line: "#4f46e5",
-  grid: "#e2e8f0",
-  tick: "#475569",
-} as const;
-
 const WINDOWS = [7, 30, 90, 365] as const;
 
 export function UsagePage() {
   const t = useT();
   const format = useFormat();
+  const CHART = useChartColors();
   const [days, setDays] = useState<(typeof WINDOWS)[number]>(30);
 
   const fetcher = useCallback(

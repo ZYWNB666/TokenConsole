@@ -20,20 +20,15 @@ import {
 } from "@/components/ui/card";
 import { useFormat, useT } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
+import { useChartColors } from "@/theme/chart-colors";
 
 import type { OverviewMetricKey, UsageSeriesPoint } from "./types";
 
 /*
- * Chart colors mirror the semantic tokens (--primary, --border,
- * --muted-foreground). SVG presentation attributes cannot reference CSS
- * variables, so the values are repeated here; keep them in sync with
- * src/app/globals.css.
+ * Chart colors come from the theme-aware palette (see
+ * src/theme/chart-colors.ts): SVG presentation attributes cannot reference
+ * CSS variables, so recharts needs concrete values per resolved theme.
  */
-const CHART = {
-  line: "#4f46e5",
-  grid: "#e2e8f0",
-  tick: "#475569",
-} as const;
 
 /** True when the user asked the system to minimize motion. */
 function usePrefersReducedMotion(): boolean {
@@ -114,6 +109,7 @@ function UsageTooltip({ active, label, payload, metric }: UsageTooltipProps) {
 export function UsageTrendChart({ series }: { series: UsageSeriesPoint[] }) {
   const t = useT();
   const format = useFormat();
+  const CHART = useChartColors();
   const reducedMotion = usePrefersReducedMotion();
   const [metric, setMetric] = useState<OverviewMetricKey>("cost");
   const config = metricConfigs[metric];

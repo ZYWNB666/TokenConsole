@@ -26,6 +26,7 @@ import { LanguageSwitcher } from "@/i18n/language-switcher";
 import { useFormat, useT } from "@/i18n/provider";
 import { brand } from "@/lib/brand";
 import { consoleRoutes } from "@/lib/navigation";
+import { ThemeSwitcher } from "@/theme/theme-switcher";
 
 import type { AuthUser } from "@/types/auth";
 
@@ -125,6 +126,7 @@ export function Header({ onOpenMobileNav, menuButtonRef }: HeaderProps) {
           <CopyButton value={brand.apiEndpoint} />
         </div>
         <LanguageSwitcher />
+        <ThemeSwitcher />
 
         {userState === "ready" && user ? (
           <DropdownMenu>

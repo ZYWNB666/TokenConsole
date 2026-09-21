@@ -12,6 +12,12 @@ export const en = {
   "common.signOut": "Sign out",
   "common.language": "Language",
 
+  // Theme
+  "theme.toggle": "Appearance",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.system": "System",
+
   // Navigation groups
   "nav.main": "Main navigation",
   "nav.group.api": "API",
@@ -298,6 +304,38 @@ export const en = {
   "billing.topups.completed": "Completed",
   "billing.topups.pending": "Pending",
   "billing.topups.unknown": "Unknown",
+
+  // Recharge
+  "recharge.title": "Recharge",
+  "recharge.description":
+    "Top up your balance through the gateway's payment checkout.",
+  "recharge.amount": "Amount (USD)",
+  "recharge.amountHint": "Whole dollars, {min}–{max}.",
+  "recharge.preset": "Preset amounts",
+  "recharge.method": "Payment method",
+  "recharge.minLabel": "min {min}",
+  "recharge.quote": "Amount to pay at checkout",
+  "recharge.quotePending": "Calculating the payable amount…",
+  "recharge.submit": "Continue to payment",
+  "recharge.submitting": "Starting checkout…",
+  "recharge.opened":
+    "The checkout page has opened. Complete the payment there; your balance updates once the gateway confirms it.",
+  "recharge.unavailable.title": "Recharge is not available",
+  "recharge.unavailable.compliance_required":
+    "The gateway requires a payment compliance confirmation before online top-up can be used.",
+  "recharge.unavailable.not_configured":
+    "No payment provider is configured on the gateway yet.",
+  "recharge.unavailable.not_supported":
+    "The payment methods configured on the gateway are not supported by this console yet.",
+  "recharge.manualLink": "Manual top-up instructions",
+  "recharge.error.amount":
+    "Enter a whole-dollar amount within the selected method's range.",
+  "recharge.error.method": "That payment method is not available.",
+  "recharge.error.notConfigured": "Recharge is not configured on the gateway yet.",
+  "recharge.error.unavailable":
+    "The payment gateway could not start the checkout. Please try again.",
+  "recharge.error.rateLimited": "Too many requests. Please wait a moment and try again.",
+  "recharge.error.generic": "Something went wrong. Please try again.",
 
   // Settings
   "settings.title": "Settings",

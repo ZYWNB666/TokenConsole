@@ -6,7 +6,7 @@ export type TopUpView = {
   id: number;
   /** UTC ISO timestamp. */
   createdAt: string;
-  /** Top-up amount in USD. */
+  /** Credited amount in USD (what the balance gained, not what was paid). */
   amountUsd: number;
   /** Payment method label. */
   method: string;
@@ -23,3 +23,30 @@ export type BillingView = {
   monthSpendUsd: number;
   topups: TopUpView[];
 };
+
+/** Recharge DTOs for the owned /api/v1/billing/recharge contract. */
+
+export type RechargeMethodView = {
+  /** Opaque gateway method id. */
+  id: string;
+  label: string;
+  /** Minimum whole-USD top-up for this method. */
+  minAmountUsd: number;
+};
+
+export type RechargeOptionsView = {
+  /** False when the gateway exposes no supported payment method. */
+  available: boolean;
+  reason: "compliance_required" | "not_configured" | "not_supported" | null;
+  methods: RechargeMethodView[];
+  /** Gateway-configured preset amounts, whole USD. */
+  presetAmountsUsd: number[];
+  /** External manual top-up link, when the gateway admin configured one. */
+  manualTopUpUrl: string | null;
+};
+
+export type RechargeOrderView =
+  /** Open the URL directly (Stripe checkout). */
+  | { kind: "redirect"; url: string }
+  /** Submit the fields as a form POST to the cashier (epay). */
+  | { kind: "form"; action: string; fields: Record<string, string> };

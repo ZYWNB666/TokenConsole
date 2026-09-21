@@ -13,6 +13,12 @@ export const zh: Dictionary = {
   "common.signOut": "退出登录",
   "common.language": "语言",
 
+  // Theme
+  "theme.toggle": "外观",
+  "theme.light": "浅色",
+  "theme.dark": "深色",
+  "theme.system": "跟随系统",
+
   // Navigation groups
   "nav.main": "主导航",
   "nav.group.api": "API",
@@ -285,6 +291,34 @@ export const zh: Dictionary = {
   "billing.topups.completed": "已完成",
   "billing.topups.pending": "处理中",
   "billing.topups.unknown": "未知",
+
+  // Recharge
+  "recharge.title": "充值",
+  "recharge.description": "通过网关的支付收银台为余额充值。",
+  "recharge.amount": "充值金额（美元）",
+  "recharge.amountHint": "{min}–{max} 的整数美元金额。",
+  "recharge.preset": "常用金额",
+  "recharge.method": "支付方式",
+  "recharge.minLabel": "最低 {min}",
+  "recharge.quote": "收银台应付金额",
+  "recharge.quotePending": "正在计算应付金额…",
+  "recharge.submit": "前往支付",
+  "recharge.submitting": "正在拉起收银台…",
+  "recharge.opened":
+    "收银台页面已打开。请在那里完成支付；网关确认到账后，余额会自动更新。",
+  "recharge.unavailable.title": "暂不可充值",
+  "recharge.unavailable.compliance_required":
+    "网关要求先完成支付合规确认，才能使用在线充值。",
+  "recharge.unavailable.not_configured": "网关尚未配置任何支付渠道。",
+  "recharge.unavailable.not_supported":
+    "网关当前配置的支付方式暂不被本控制台支持。",
+  "recharge.manualLink": "人工充值说明",
+  "recharge.error.amount": "请输入所选支付方式允许范围内的整数美元金额。",
+  "recharge.error.method": "该支付方式不可用。",
+  "recharge.error.notConfigured": "网关尚未配置充值渠道。",
+  "recharge.error.unavailable": "支付网关暂时无法拉起收银台，请稍后重试。",
+  "recharge.error.rateLimited": "请求过于频繁，请稍后再试。",
+  "recharge.error.generic": "出现问题，请重试。",
 
   // Settings
   "settings.title": "设置",

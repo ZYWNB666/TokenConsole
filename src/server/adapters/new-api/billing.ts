@@ -13,8 +13,9 @@ import { fetchAccount, quotaToUsd, type UpstreamAccount } from "./usage";
  * Server-only billing adapter for the New API fork (commit 972aed19).
  *
  * Reads the caller's real balance and top-up (payment) history. Payment
- * initiation is deliberately NOT implemented — a recharge flow requires a
- * real payment provider integration and must never be simulated.
+ * initiation lives in recharge.ts; the history mapping below records the
+ * credited USD, never the gateway's payable figure (whose currency depends
+ * on the provider configuration).
  */
 
 const TOPUPS_PATH = "/api/user/topup/self";
@@ -23,9 +24,9 @@ export type UpstreamTopUp = {
   id: number;
   /** UTC ISO timestamp. */
   createdAt: string;
-  /** Top-up amount in USD. */
+  /** Credited amount in USD. */
   amountUsd: number;
-  /** Payment method label, e.g. "epay". */
+  /** Payment method label, e.g. "alipay" or "stripe". */
   method: string;
   status: "completed" | "pending" | "unknown";
   /** Order/trade number for support reference. */
@@ -36,16 +37,43 @@ type UpstreamTopUpRow = {
   id?: unknown;
   created_at?: unknown;
   amount?: unknown;
+  money?: unknown;
   payment_method?: unknown;
+  payment_provider?: unknown;
   status?: unknown;
   trade_no?: unknown;
-  money?: unknown;
 };
 
 function mapStatus(status: unknown): UpstreamTopUp["status"] {
   if (status === "success" || status === "completed" || status === 1 || status === "1") return "completed";
   if (status === "pending" || status === 0 || status === "0") return "pending";
   return "unknown";
+}
+
+/**
+ * Credited USD per rail (fork model/topup.go at 972aed19): Stripe records the
+ * group-ratio-converted USD in `money`; epay/waffo/pancake record whole USD
+ * in `amount`; Creem records credited quota units in `amount`. `money` on the
+ * epay rail is the payable in the gateway's charge currency (e.g. CNY) and
+ * is deliberately not exposed.
+ */
+function creditedUsd(row: UpstreamTopUpRow): number {
+  if (row.payment_provider === "stripe") {
+    if (typeof row.money === "number" && Number.isFinite(row.money) && row.money > 0) {
+      return Number(row.money.toFixed(2));
+    }
+    throw new UpstreamHttpError("UPSTREAM_UNAVAILABLE", "upstream topup row is malformed");
+  }
+  if (row.payment_provider === "creem") {
+    if (typeof row.amount === "number" && Number.isFinite(row.amount) && row.amount > 0) {
+      return quotaToUsd(row.amount, 2);
+    }
+    throw new UpstreamHttpError("UPSTREAM_UNAVAILABLE", "upstream topup row is malformed");
+  }
+  if (typeof row.amount === "number" && Number.isInteger(row.amount) && row.amount > 0) {
+    return row.amount;
+  }
+  throw new UpstreamHttpError("UPSTREAM_UNAVAILABLE", "upstream topup row is malformed");
 }
 
 function toTopUp(row: UpstreamTopUpRow): UpstreamTopUp {
@@ -55,21 +83,10 @@ function toTopUp(row: UpstreamTopUpRow): UpstreamTopUp {
   ) {
     throw new UpstreamHttpError("UPSTREAM_UNAVAILABLE", "upstream topup row is malformed");
   }
-  // The fork records both `amount` (quota units) and `money` (USD); prefer
-  // the USD value and fall back to the converted quota amount.
-  let amountUsd: number | null = null;
-  if (typeof row.money === "number" && Number.isFinite(row.money) && row.money !== 0) {
-    amountUsd = row.money;
-  } else if (typeof row.amount === "number" && Number.isFinite(row.amount)) {
-    amountUsd = quotaToUsd(row.amount, 2);
-  }
-  if (amountUsd === null) {
-    throw new UpstreamHttpError("UPSTREAM_UNAVAILABLE", "upstream topup row is malformed");
-  }
   return {
     id: row.id as number,
     createdAt: new Date(row.created_at * 1000).toISOString(),
-    amountUsd,
+    amountUsd: creditedUsd(row),
     method: typeof row.payment_method === "string" ? row.payment_method : "",
     status: mapStatus(row.status),
     tradeNo: typeof row.trade_no === "string" ? row.trade_no : "",

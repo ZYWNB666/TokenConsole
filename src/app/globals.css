@@ -31,6 +31,54 @@
   --warning: #92400e; /* amber-800 */
   --error: #b91c1c; /* red-700 — 6.5:1 as text on white and with white text */
   --info: #1d4ed8; /* blue-700 */
+
+  /* Destructive control background (buttons): kept deep in both themes so the
+     white label stays >= 4.5:1. Separate from --error, which doubles as the
+     status-text token and therefore lightens in dark mode. */
+  --destructive: #b91c1c; /* red-700 — 6.5:1 with white text */
+
+  color-scheme: light;
+}
+
+/*
+ * Dark theme — same semantic roles on the inverted slate scale. The class
+ * lives on <html>: rendered server-side from the `tc_theme` cookie, or added
+ * by the inline pre-paint script when the setting is "system". Contrast of
+ * every text-bearing token on the surfaces it appears on:
+ *   foreground — 18.4:1 on background, 16.3:1 on surface
+ *   muted-foreground — 13.6:1 on background, 12.0:1 on surface,
+ *     9.9:1 on surface-muted
+ *   primary as text — 6.0:1 on surface, 5.2:1 on a primary/10 tint
+ *   primary-foreground on primary (filled buttons) — 5.4:1
+ *   status text on surface / on its status/10 tint — success 10.3 / 8.5,
+ *     warning 10.7 / 8.9, error 6.5 / 5.7, info 7.0 / 6.0
+ *   destructive with white text — 8.3:1; focus ring on surface — 9.0:1
+ * Border hairlines stay deliberately subtle (the light pair is 1.35:1) —
+ * they separate surfaces, they never carry meaning alone.
+ */
+.dark {
+  /* Neutral foundation (Slate, inverted) */
+  --background: #020617; /* slate-950 — deep page canvas */
+  --foreground: #f1f5f9; /* slate-100 — primary text */
+  --surface: #0f172a; /* slate-900 — cards, sidebar, header */
+  --surface-muted: #1e293b; /* slate-800 — subtle fills, table headers */
+  --border: #334155; /* slate-700 — hairline borders */
+  --muted-foreground: #cbd5e1; /* slate-300 */
+
+  /* Accent: indigo-400 is the text-grade accent on dark surfaces; filled
+     buttons flip to an indigo-950 label to stay high contrast. */
+  --primary: #818cf8; /* indigo-400 */
+  --primary-foreground: #1e1b4b; /* indigo-950 */
+  --focus-ring: #a5b4fc; /* indigo-300 — visible focus indicator */
+
+  --success: #4ade80; /* green-400 */
+  --warning: #fbbf24; /* amber-400 */
+  --error: #f87171; /* red-400 */
+  --info: #60a5fa; /* blue-400 */
+
+  --destructive: #991b1b; /* red-800 — 8.3:1 with white text */
+
+  color-scheme: dark;
 }
 
 /*
@@ -50,6 +98,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-error: var(--error);
+  --color-destructive: var(--destructive);
   --color-info: var(--info);
   --color-ring: var(--focus-ring);
 

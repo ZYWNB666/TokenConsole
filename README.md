@@ -28,9 +28,17 @@ All console modules are live with **real gateway data** (no mock datasets):
 - **Usage** (`/usage`): 7/30/90/365-day windows with totals, average
   requests/tokens per minute, daily series and per-model plus per-key
   breakdowns (long windows are fetched in fork-sized chunks)
-- **Billing** (`/billing`): balance, month and lifetime spend, real top-up
-  history. Payment/recharge is deliberately absent until a real payment
-  provider integration exists
+- **Billing** (`/billing`): balance, month and lifetime spend, the real
+  recharge flow and real top-up history. Recharge goes through the gateway's
+  actual payment rails (epay cashier form and Stripe Checkout, with a live
+  payable quote before checkout); when the gateway has no supported payment
+  method configured, the card says so honestly instead of faking a flow.
+  Top-up history records the credited USD per payment rail
+- **Dark / light theme**: light, dark and system appearance from the header,
+  persisted in the `tc_theme` cookie and rendered server-side so the first
+  paint is already correct; the `system` choice resolves pre-paint with no
+  flash and follows OS changes live. Charts use per-theme palettes (SVG
+  attributes cannot carry CSS variables)
 - **Organization** (`/organization`): member directory and role/enable
   management for admins; members see an honest admin-required state and
   their session is never affected (403 without cookie clearing)
